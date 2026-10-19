@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>মাল্টি ব্যাটল রয়্যাল - World Battle Royale</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #030712;
+            color: #fff;
+        }
+
+        .app-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: radial-gradient(circle at center, #1e1b4b 0%, #030712 100%);
+        }
+
+        /* Top Status Bar */
+        .top-bar {
+            height: 52px;
+            padding: 0 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            z-index: 5;
+        }
+
+        .title-text {
+            font-size: 16px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            background: linear-gradient(135deg, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .live-counter {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            box-shadow: 0 2px 10px rgba(239, 68, 68, 0.4);
+        }
+
+        /* Canvas Area */
+        .game-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            touch-action: none;
+            gap: 16px;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        /* In-Game Start Button placed right below the Ring/Canvas */
+        .ingame-start-btn {
+            padding: 12px 36px;
+            font-size: 18px;
+            font-weight: 800;
+            color: white;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
+            animation: pulseBtn 1.5s infinite;
+            z-index: 10;
+        }
+
+        @keyframes pulseBtn {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Bottom Sheet Log */
+        .bottom-sheet {
+            height: 170px;
+            background: rgba(15, 23, 42, 0.92);
+            backdrop-filter: blur(16px);
+            border-top: 1px solid rgba(56, 189, 248, 0.2);
+            border-radius: 20px 20px 0 0;
+            display: flex;
+            flex-direction: column;
+            padding: 12px 16px;
+            z-index: 5;
+        }
+
+        .sheet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .sheet-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .sheet-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .home-btn-small {
+            background: rgba(255, 255, 255, 0.1);
+            color: #cbd5e1;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .restart-btn {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        .restart-btn:active, .home-btn-small:active {
+            transform: scale(0.95);
+        }
+
+        .elimination-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .log-item {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.04);
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            animation: slideIn 0.2s ease-out;
+        }
+
+        .log-rank {
+            width: 38px;
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .log-icon-box {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 16px;
+        }
+
+        .log-flag {
+            width: 22px;
+            height: 15px;
+            border-radius: 2px;
+            object-fit: cover;
+        }
+
+        .log-name {
+            flex: 1;
+        }
+
+        /* Professional Home Screen Overlay */
+        .home-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle at center, #1e1b4b 0%, #030712 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 40px 20px 24px 20px;
+            z-index: 100;
+            overflow-y: auto;
+        }
+
+        .hero-section {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .logo-badge {
+            width: 85px;
+            height: 85px;
+            border-radius: 26px;
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(99, 102, 241, 0.2));
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 16px auto;
+            box-shadow: 0 0 35px rgba(56, 189, 248, 0.3);
+            font-size: 42px;
+            animation: floatLogo 3s ease-in-out infinite;
+        }
+
+        .logo-title {
+            font-size: 28px;
+            font-weight: 900;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #ffffff 0%, #38bdf8 50%, #818cf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Mode Selector Buttons */
+        .mode-selector {
+            width: 100%;
+            max-width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .mode-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 14px 18px;
+            border-radius: 18px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .mode-btn.active {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(99, 102, 241, 0.25));
+            border-color: #38bdf8;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
+        }
+
+        .mode-btn-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .mode-icon {
+            font-size: 22px;
+        }
+
+        .start-btn-box {
+            width: 100%;
+            max-width: 320px;
+            margin-bottom: 10px;
+        }
+
+        .start-btn {
+            width: 100%;
+            padding: 16px;
+            font-size: 18px;
+            font-weight: 800;
+            color: white;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
+            transition: transform 0.2s;
+        }
+
+        .start-btn:active {
+            transform: scale(0.96);
+        }
+
+        /* Top 3 Winner Podium Modal */
+        .winner-modal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(3, 7, 18, 0.92);
+            backdrop-filter: blur(16px);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+            z-index: 90;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .modal-title {
+            font-size: 26px;
+            font-weight: 900;
+            color: #fde047;
+            margin-bottom: 24px;
+            text-align: center;
+            text-shadow: 0 0 20px rgba(253, 224, 71, 0.4);
+        }
+
+        .podium-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 12px;
+            width: 100%;
+            max-width: 360px;
+            margin-bottom: 30px;
+        }
+
+        .podium-card {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 12px 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .podium-card.rank-1 {
+            order: 2;
+            height: 170px;
+            background: linear-gradient(180deg, rgba(234, 179, 8, 0.25) 0%, rgba(255, 255, 255, 0.05) 100%);
+            border-color: #eab308;
+            box-shadow: 0 0 25px rgba(234, 179, 8, 0.3);
+        }
+
+        .podium-card.rank-2 {
+            order: 1;
+            height: 140px;
+            background: linear-gradient(180deg, rgba(148, 163, 184, 0.2) 0%, rgba(255, 255, 255, 0.05) 100%);
+            border-color: #94a3b8;
+        }
+
+        .podium-card.rank-3 {
+            order: 3;
+            height: 125px;
+            background: linear-gradient(180deg, rgba(180, 83, 9, 0.2) 0%, rgba(255, 255, 255, 0.05) 100%);
+            border-color: #b45309;
+        }
+
+        .podium-badge {
+            font-size: 18px;
+            margin-bottom: 6px;
+        }
+
+        .podium-icon-box {
+            font-size: 32px;
+            margin-bottom: 6px;
+        }
+
+        .podium-flag {
+            width: 36px;
+            height: 24px;
+            border-radius: 4px;
+            object-fit: cover;
+            margin-bottom: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        }
+
+        .podium-name {
+            font-size: 11px;
+            font-weight: 700;
+            color: #f8fafc;
+            line-height: 1.2;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .play-again-btn {
+            padding: 14px 28px;
+            font-size: 15px;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
+        }
+
+        .home-menu-btn {
+            padding: 14px 24px;
+            font-size: 15px;
+            font-weight: bold;
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 30px;
+            cursor: pointer;
+        }
+
+        @keyframes floatLogo {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-8px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <!-- Home Screen Overlay -->
+        <div class="home-overlay" id="homeOverlay">
+            <div class="hero-section">
+                <div class="logo-badge" id="appLogoBadge">🍎</div>
+                <h1 class="logo-title" id="appLogoTitle">ফলের যুদ্ধ</h1>
+            </div>
+
+            <!-- Mode Selector Buttons -->
+            <div class="mode-selector">
+                <button class="mode-btn active" id="btnFruit" onclick="selectMode('fruit')">
+                    <div class="mode-btn-left">
+                        <span class="mode-icon">🍎</span>
+                        <span>ফলের যুদ্ধ</span>
+                    </div>
+                    <span>➔</span>
+                </button>
+                <button class="mode-btn" id="btnFlag" onclick="selectMode('flag')">
+                    <div class="mode-btn-left">
+                        <span class="mode-icon">🏁</span>
+                        <span>পতাকার যুদ্ধ</span>
+                    </div>
+                    <span>➔</span>
+                </button>
+                <button class="mode-btn" id="btnAnimal" onclick="selectMode('animal')">
+                    <div class="mode-btn-left">
+                        <span class="mode-icon">🦁</span>
+                        <span>প্রাণীর যুদ্ধ</span>
+                    </div>
+                    <span>➔</span>
+                </button>
+            </div>
+
+            <div class="start-btn-box">
+                <button class="start-btn" onclick="startGame()">গেম শুরু করুন</button>
+            </div>
+        </div>
+
+        <!-- Winner Modal -->
+        <div class="winner-modal" id="winnerModal">
+            <div class="modal-title">🎉 লড়াই সমাপ্ত! 🎉</div>
+            <div class="podium-container" id="podiumContainer"></div>
+            <div class="modal-buttons">
+                <button class="play-again-btn" onclick="resetGame()">আবার খেলুন</button>
+                <button class="home-menu-btn" onclick="goHome()">মেনু</button>
+            </div>
+        </div>
+
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <span class="title-text" id="gameTitleDisplay">ফলের যুদ্ধ</span>
+            <span class="live-counter" id="liveCount">বাকী: ২৪</span>
+        </div>
+
+        <!-- Canvas Area & Start Button directly below the Ring -->
+        <div class="game-area">
+            <canvas id="gameCanvas"></canvas>
+            <button class="ingame-start-btn" id="ingameStartBtn" onclick="launchBattle()">START</button>
+        </div>
+
+        <!-- Bottom Sheet -->
+        <div class="bottom-sheet">
+            <div class="sheet-header">
+                <span class="sheet-title">বাদ পড়ার তালিকা</span>
+                <div class="sheet-actions">
+                    <button class="home-btn-small" onclick="goHome()">মেনু</button>
+                    <button class="restart-btn" onclick="resetGame()">আবার খেলুন</button>
+                </div>
+            </div>
+            <div class="elimination-list" id="eliminationList"></div>
+        </div>
+
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const homeOverlay = document.getElementById('homeOverlay');
+        const ingameStartBtn = document.getElementById('ingameStartBtn');
+        const winnerModal = document.getElementById('winnerModal');
+        const podiumContainer = document.getElementById('podiumContainer');
+        const eliminationList = document.getElementById('eliminationList');
+        const liveCountEl = document.getElementById('liveCount');
+        const gameTitleDisplay = document.getElementById('gameTitleDisplay');
+        const appLogoBadge = document.getElementById('appLogoBadge');
+        const appLogoTitle = document.getElementById('appLogoTitle');
+
+        let currentMode = 'fruit';
+
+        const fruitsData = [
+            { id: 'f1', name: 'আম', emoji: '🥭' }, { id: 'f2', name: 'আপেল', emoji: '🍎' },
+            { id: 'f3', name: 'কলা', emoji: '🍌' }, { id: 'f4', name: 'কমলা', emoji: '🍊' },
+            { id: 'f5', name: 'তরমুজ', emoji: '🍉' }, { id: 'f6', name: 'আঙ্গুর', emoji: '🍇' },
+            { id: 'f7', name: 'স্ট্রবেরি', emoji: '🍓' }, { id: 'f8', name: 'আনারস', emoji: '🍍' },
+            { id: 'f9', name: 'নারিকেল', emoji: '🥥' }, { id: 'f10', name: 'চেবি', emoji: '🍒' },
+            { id: 'f11', name: 'পীচ', emoji: '🍑' }, { id: 'f12', name: 'নাশপাতি', emoji: '🍐' },
+            { id: 'f13', name: 'লেবু', emoji: '🍋' }, { id: 'f14', name: 'ডালিম', emoji: '🍎' },
+            { id: 'f15', name: 'আতা', emoji: '🍈' }, { id: 'f16', name: 'কুই', emoji: '🥝' },
+            { id: 'f17', name: 'ব্লুবেরি', emoji: '🫐' }, { id: 'f18', name: 'পেঁপে', emoji: '🥭' },
+            { id: 'f19', name: 'ড্রাগন ফ্রুট', emoji: '🐉' }, { id: 'f20', name: 'বেল', emoji: '🍈' },
+            { id: 'f21', name: 'লিচু', emoji: '🍒' }, { id: 'f22', name: 'পেয়ারা', emoji: '🍏' },
+            { id: 'f23', name: 'কামরাঙ্গা', emoji: '⭐' }, { id: 'f24', name: 'খুরমা খেজুর', emoji: '🌴' }
+        ];
+
+        const animalsData = [
+            { id: 'a1', name: 'সিংহ', emoji: '🦁' }, { id: 'a2', name: 'বাঘ', emoji: '🐅' },
+            { id: 'a3', name: 'হাতি', emoji: '🐘' }, { id: 'a4', name: 'ভাল্লুক', emoji: '🐻' },
+            { id: 'a5', name: 'হরিণ', emoji: '🦌' }, { id: 'a6', name: 'বানর', emoji: '🐒' },
+            { id: 'a7', name: 'শেয়াল', emoji: '🦊' }, { id: 'a8', name: 'নেকড়ে', emoji: '🐺' },
+            { id: 'a9', name: 'ঘোড়া', emoji: '🐎' }, { id: 'a10', name: 'গরু', emoji: '🐄' },
+            { id: 'a11', name: 'কুকুর', emoji: '🐕' }, { id: 'a12', name: 'বিড়াল', emoji: '🐈' },
+            { id: 'a13', name: 'ঈগল', emoji: '🦅' }, { id: 'a14', name: 'পান্ডা', emoji: '🐼' },
+            { id: 'a15', name: 'ক্যাঙ্গারু', emoji: '🦘' }, { id: 'a16', name: 'জিরাফ', emoji: '🦒' },
+            { id: 'a17', name: 'জেব্রা', emoji: '🦓' }, { id: 'a18', name: 'উট', emoji: '🐪' },
+            { id: 'a19', name: 'গণ্ডার', emoji: '🦏' }, { id: 'a20', name: 'কুমির', emoji: '🐊' },
+            { id: 'a21', name: 'কচ্ছপ', emoji: '🐢' }, { id: 'a22', name: 'খরগোশ', emoji: '🐇' },
+            { id: 'a23', name: 'পেঁচা', emoji: '🦉' }, { id: 'a24', name: 'ময়ূর', emoji: '🦚' }
+        ];
+
+        const flagsData = [
+            { code: 'bd', name: 'বাংলাদেশ' }, { code: 'in', name: 'ভারত' }, { code: 'pk', name: 'পাকিস্তান' },
+            { code: 'us', name: 'আমেরিকা' }, { code: 'gb', name: 'যুক্তরাজ্য' }, { code: 'ca', name: 'কানাডা' },
+            { code: 'au', name: 'অস্ট্রেলিয়া' }, { code: 'ar', name: 'আর্জেন্টিনা' }, { code: 'br', name: 'ব্রাজিল' },
+            { code: 'de', name: 'জার্মানি' }, { code: 'fr', name: 'ফ্রান্স' }, { code: 'jp', name: 'জাপান' },
+            { code: 'cn', name: 'চীন' }, { code: 'ru', name: 'রাশিয়া' }, { code: 'sa', name: 'সৌদি আরব' },
+            { code: 'ae', name: 'ইউএই' }, { code: 'qa', name: 'কাতার' }, { code: 'ps', name: 'ফিলিস্তিন' },
+            { code: 'tr', name: 'তুরস্ক' }, { code: 'it', name: 'ইতালি' }, { code: 'es', name: 'স্পেন' },
+            { code: 'pt', name: 'পর্তুগাল' }, { code: 'nl', name: 'নেদারল্যান্ডস' }, { code: 'be', name: 'বেলজিয়াম' },
+            { code: 'ch', name: 'সুইজারল্যান্ড' }, { code: 'se', name: 'সুইডেন' }, { code: 'no', name: 'নরওয়ে' },
+            { code: 'dk', name: 'ডেনমার্ক' }, { code: 'fi', name: 'ফিনল্যান্ড' }, { code: 'kr', name: 'দক্ষিণ কোরিয়া' },
+            { code: 'id', name: 'ইন্দোনেশিয়া' }, { code: 'my', name: 'মালয়েশিয়া' }, { code: 'sg', name: 'সিঙ্গাপুর' },
+            { code: 'th', name: 'থাইল্যান্ড' }, { code: 'vn', name: 'ভিয়েতনামী' }, { code: 'ph', name: 'ফিলিপাইন' },
+            { code: 'za', name: 'দক্ষিণ আফ্রিকা' }, { code: 'eg', name: 'মিশর' }, { code: 'ng', name: 'নাইজেরিয়া' },
+            { code: 'ke', name: 'কেনিয়া' }, { code: 'mx', name: 'মেক্সিকো' }, { code: 'co', name: 'কলম্বিয়া' },
+            { code: 'cl', name: 'চিলি' }, { code: 'pe', name: 'পেরু' }, { code: 'nz', name: 'নিউজিল্যান্ড' },
+            { code: 'np', name: 'নেপাল' }, { code: 'lk', name: 'শ্রীলঙ্কা' }, { code: 'af', name: 'আফগানিস্তান' },
+            { code: 'ir', name: 'ইরান' }, { code: 'iq', name: 'ইরাক' }, { code: 'sy', name: 'সিরিয়া' },
+            { code: 'ye', name: 'ইয়েমেন' }, { code: 'om', name: 'ওমান' }, { code: 'kw', name: 'কুয়েত' },
+            { code: 'bh', name: 'বাহরাইন' }, { code: 'jo', name: 'জর্ডান' }, { code: 'lb', name: 'লেবানন' },
+            { code: 'dz', name: 'আলজেরিয়া' }, { code: 'ma', name: 'মরক্কো' }, { code: 'tn', name: 'তিউনিসিয়া' },
+            { code: 'gh', name: 'ঘানা' }, { code: 'cm', name: 'ক্যামেরুন' }, { code: 'sn', name: 'সেনেগাল' },
+            { code: 'zw', name: 'জিম্বাবুয়ে' }, { code: 'jm', name: 'জামাইকা' }, { code: 'cu', name: 'কিউবা' },
+            { code: 'ua', name: 'ইউক্রেন' }, { code: 'pl', name: 'পোল্যান্ড' }, { code: 'ro', name: 'রোমানিয়া' },
+            { code: 'gr', name: 'গ্রিস' }, { code: 'hr', name: 'ক্রোয়েশিয়া' }, { code: 'rs', name: 'সার্বিয়া' },
+            { code: 'cz', name: 'চেকিয়া' }, { code: 'hu', name: 'হাঙ্গেরি' }, { code: 'at', name: 'অস্ট্রিয়া' },
+            { code: 'ie', name: 'আয়ারল্যান্ড' }, { code: 'is', name: 'আইসল্যান্ড' }, { code: 'ee', name: 'এস্তোনিয়া' },
+            { code: 'lv', name: 'লাটভিয়া' }, { code: 'lt', name: 'লিথুয়ানিয়া' }, { code: 'by', name: 'বেলারুশ' },
+            { code: 'bg', name: 'বুলগেরিয়া' }, { code: 'sk', name: 'স্লোভাকিয়া' }, { code: 'si', name: 'স্লোভেনিয়া' },
+            { code: 'al', name: 'আলবেনিয়া' }, { code: 'ba', name: 'বসনিয়া' }, { code: 'ge', name: 'জর্জিয়া' },
+            { code: 'am', name: 'আর্মেনিয়া' }, { code: 'az', name: 'আজারবাইজান' }, { code: 'kz', name: 'কাজাখস্তান' },
+            { code: 'uz', name: 'উজবেকিস্তান' }, { code: 'tm', name: 'তুর্কমেনিস্তান' }, { code: 'kg', name: 'কিরগিজস্তান' },
+            { code: 'tj', name: 'তایجিকিস্তান' }, { code: 'mn', name: 'মঙ্গোলিয়া' }, { code: 'kh', name: 'কম্বোডিয়া' },
+            { code: 'la', name: 'লাওস' }, { code: 'mm', name: 'মিয়ানমার' }, { code: 'bn', name: 'ব্রুনাই' },
+            { code: 'mv', name: 'মালদ্বীপ' }, { code: 'bt', name: 'ভুটান' }, { code: 'fj', name: 'ফিজি' },
+            { code: 'pg', name: 'পাপুয়া নিউ গিনি' }, { code: 'uy', name: 'উরুগুয়ে' }, { code: 'py', name: 'প্যারাগুয়ে' },
+            { code: 'bo', name: 'বলিভিয়া' }, { code: 'ec', name: 'ইকুয়েডর' }, { code: 've', name: 'ভেনিজুয়েলা' },
+            { code: 'cr', name: 'কোস্টারিকা' }, { code: 'pa', name: 'পানামা' }, { code: 'gt', name: 'গুয়াতেমালা' },
+            { code: 'ht', name: 'হাইতি' }, { code: 'do', name: 'ডোমিনিকান' }, { code: 'ly', name: 'লিবিয়া' },
+            { code: 'sd', name: 'সুদান' }, { code: 'et', name: 'ইথিওপিয়া' }, { code: 'so', name: 'সোমালিয়া' },
+            { code: 'ug', name: 'উগান্ডা' }, { code: 'tz', name: 'তানজানিয়া' }, { code: 'mz', name: 'মোজাম্বিক' },
+            { code: 'mg', name: 'মাদাগাস্কার' }, { code: 'ao', name: 'অ্যাঙ্গোলা' }, { code: 'na', name: 'নামিবিয়া' },
+            { code: 'bw', name: 'বতসোয়ানা' }, { code: 'ci', name: 'আইভরি কোস্ট' }, { code: 'mt', name: 'মাল্টা' },
+            { code: 'cy', name: 'সাইপ্রাস' }, { code: 'lu', name: 'লাক্সেমবার্গ' }, { code: 'mc', name: 'মোনাকো' }
+        ];
+
+        let canvasSize = 300;
+        let centerX = 150;
+        let centerY = 150;
+        let arenaRadius = 130;
+
+        const RING_SPEED = 0.015;
+        const BASE_BALL_SPEED = 3.2;
+        
+        let MIN_BALL_RADIUS = 6.5; 
+        let MAX_BALL_RADIUS = 14; 
+        let currentBallRadius = MIN_BALL_RADIUS;
+
+        let ringAngle = 0;
+        let balls = [];
+        let eliminatedCount = 0;
+        let totalCount = 0;
+        let isGameRunning = false;
+        let isBattleStarted = false;
+        let animationFrameId = null;
+        let lastEliminatedTime = 0;
+        let wakeLock = null;
+
+        let top3Rankings = [];
+        const imageCache = {};
+
+        function getFlagImage(code) {
+            if (!imageCache[code]) {
+                const img = new Image();
+                img.src = `https://flagcdn.com/w80/${code.toLowerCase()}.png`;
+                imageCache[code] = img;
+            }
+            return imageCache[code];
+        }
+
+        async function requestWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                }
+            } catch (err) {
+                console.log('Wake Lock Error:', err);
+            }
+        }
+
+        function releaseWakeLock() {
+            if (wakeLock !== null) {
+                wakeLock.release();
+                wakeLock = null;
+            }
+        }
+
+        function selectMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+
+            if (mode === 'fruit') {
+                document.getElementById('btnFruit').classList.add('active');
+                appLogoBadge.innerText = '🍎';
+                appLogoTitle.innerText = 'ফলের যুদ্ধ';
+                gameTitleDisplay.innerText = 'ফলের যুদ্ধ';
+            } else if (mode === 'flag') {
+                document.getElementById('btnFlag').classList.add('active');
+                appLogoBadge.innerText = '🏁';
+                appLogoTitle.innerText = 'পতাকার যুদ্ধ';
+                gameTitleDisplay.innerText = 'পতাকার যুদ্ধ';
+            } else if (mode === 'animal') {
+                document.getElementById('btnAnimal').classList.add('active');
+                appLogoBadge.innerText = '🦁';
+                appLogoTitle.innerText = 'প্রাণীর যুদ্ধ';
+                gameTitleDisplay.innerText = 'প্রাণীর যুদ্ধ';
+            }
+        }
+
+        class Ball {
+            constructor(item) {
+                this.item = item;
+                const r = Math.random() * (arenaRadius - 35);
+                const theta = Math.random() * Math.PI * 2;
+                this.x = centerX + r * Math.cos(theta);
+                this.y = centerY + r * Math.sin(theta);
+                
+                const angle = Math.random() * Math.PI * 2;
+                this.vx = Math.cos(angle) * BASE_BALL_SPEED;
+                this.vy = Math.sin(angle) * BASE_BALL_SPEED;
+                this.isOut = false;
+                
+                if (currentMode === 'flag') {
+                    this.img = getFlagImage(item.code);
+                }
+            }
+
+            update() {
+                if (!isBattleStarted) return;
+
+                if (this.isOut) {
+                    this.vy += 0.25;
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    return;
+                }
+
+                this.x += this.vx;
+                this.y += this.vy;
+
+                const speed = Math.hypot(this.vx, this.vy);
+                if (speed > 0) {
+                    this.vx = (this.vx / speed) * BASE_BALL_SPEED;
+                    this.vy = (this.vy / speed) * BASE_BALL_SPEED;
+                }
+
+                const dx = this.x - centerX;
+                const dy = this.y - centerY;
+                const dist = Math.hypot(dx, dy);
+
+                if (dist + currentBallRadius >= arenaRadius) {
+                    let ballAngle = Math.atan2(dy, dx);
+                    if (ballAngle < 0) ballAngle += Math.PI * 2;
+
+                    const gapAngleSize = (currentBallRadius * 3.5) / arenaRadius;
+
+                    let gStart = ringAngle % (Math.PI * 2);
+                    if (gStart < 0) gStart += Math.PI * 2;
+                    let gEnd = (gStart + gapAngleSize) % (Math.PI * 2);
+
+                    let inGap = false;
+                    if (gStart < gEnd) {
+                        inGap = ballAngle >= gStart && ballAngle <= gEnd;
+                    } else {
+                        inGap = ballAngle >= gStart || ballAngle <= gEnd;
+                    }
+
+                    const now = Date.now();
+
+                    if (inGap && (now - lastEliminatedTime > 350)) {
+                        this.isOut = true;
+                        lastEliminatedTime = now;
+                        handleElimination(this.item);
+                    } else {
+                        const nx = dx / dist;
+                        const ny = dy / dist;
+
+                        const dot = this.vx * nx + this.vy * ny;
+                        if (dot > 0) {
+                            this.vx -= 2 * dot * nx;
+                            this.vy -= 2 * dot * ny;
+                        }
+
+                        this.x = centerX + nx * (arenaRadius - currentBallRadius - 1.5);
+                        this.y = centerY + ny * (arenaRadius - currentBallRadius - 1.5);
+                    }
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, currentBallRadius, 0, Math.PI * 2);
+                
+                if (currentMode === 'flag') {
+                    ctx.clip();
+                    if (this.img && this.img.complete && this.img.naturalWidth !== 0) {
+                        ctx.drawImage(this.img, this.x - currentBallRadius, this.y - currentBallRadius, currentBallRadius * 2, currentBallRadius * 2);
+                    } else {
+                        ctx.fillStyle = '#64748b';
+                        ctx.fill();
+                    }
+                } else {
+                    const grad = ctx.createRadialGradient(
+                        this.x - currentBallRadius * 0.3, 
+                        this.y - currentBallRadius * 0.3, 
+                        currentBallRadius * 0.1, 
+                        this.x, 
+                        this.y, 
+                        currentBallRadius
+                    );
+                    
+                    if (currentMode === 'fruit') {
+                        grad.addColorStop(0, '#f43f5e');
+                        grad.addColorStop(1, '#be123c');
+                    } else {
+                        grad.addColorStop(0, '#10b981');
+                        grad.addColorStop(1, '#047857');
+                    }
+
+                    ctx.fillStyle = grad;
+                    ctx.fill();
+
+                    ctx.font = `${currentBallRadius * 1.35}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(this.item.emoji, this.x, this.y + 1);
+                }
+
+                ctx.restore();
+
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, currentBallRadius, 0, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+            }
+        }
+
+        function checkBallCollisions() {
+            if (!isBattleStarted) return;
+
+            for (let i = 0; i < balls.length; i++) {
+                if (balls[i].isOut) continue;
+                for (let j = i + 1; j < balls.length; j++) {
+                    if (balls[j].isOut) continue;
+
+                    let b1 = balls[i];
+                    let b2 = balls[j];
+
+                    let dx = b2.x - b1.x;
+                    let dy = b2.y - b1.y;
+                    let dist = Math.hypot(dx, dy);
+
+                    if (dist < currentBallRadius * 2) {
+                        let overlap = (currentBallRadius * 2) - dist;
+                        let nx = dx / dist;
+                        let ny = dy / dist;
+
+                        b1.x -= nx * overlap * 0.5;
+                        b1.y -= ny * overlap * 0.5;
+                        b2.x += nx * overlap * 0.5;
+                        b2.y += ny * overlap * 0.5;
+
+                        let kx = b1.vx - b2.vx;
+                        let ky = b1.vy - b2.vy;
+                        let p = 2 * (nx * kx + ny * ky) / 2;
+
+                        b1.vx -= p * nx;
+                        b1.vy -= p * ny;
+                        b2.vx += p * nx;
+                        b2.vy += p * ny;
+                    }
+                }
+            }
+        }
+
+        function updateBallScale() {
+            const activeRemaining = totalCount - eliminatedCount;
+            const progress = 1 - (activeRemaining / totalCount);
+            currentBallRadius = MIN_BALL_RADIUS + (MAX_BALL_RADIUS - MIN_BALL_RADIUS) * Math.pow(progress, 1.5);
+        }
+
+        function drawArena() {
+            ctx.save();
+            ctx.beginPath();
+            
+            const gapAngleSize = (currentBallRadius * 2.2) / arenaRadius;
+            let gapStart = ringAngle;
+            let gapEnd = ringAngle + gapAngleSize;
+
+            ctx.arc(centerX, centerY, arenaRadius, gapEnd, gapStart + Math.PI * 2);
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 10;
+            ctx.lineCap = 'round';
+            ctx.shadowColor = '#0284c7';
+            ctx.shadowBlur = 15;
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        function handleElimination(item) {
+            eliminatedCount++;
+            let activeRemaining = totalCount - eliminatedCount;
+            liveCountEl.innerText = `বাকী: ${activeRemaining}`;
+
+            updateBallScale();
+
+            const rank = activeRemaining + 1;
+
+            if (rank <= 3) {
+                top3Rankings.push({ rank, item });
+            }
+
+            const logRow = document.createElement('div');
+            logRow.className = 'log-item';
+
+            if (currentMode === 'flag') {
+                logRow.innerHTML = `
+                    <span class="log-rank">#${rank}</span>
+                    <div class="log-icon-box"><img class="log-flag" src="https://flagcdn.com/w80/${item.code.toLowerCase()}.png" alt=""></div>
+                    <span class="log-name">${item.name}</span>
+                `;
+            } else {
+                logRow.innerHTML = `
+                    <span class="log-rank">#${rank}</span>
+                    <div class="log-icon-box">${item.emoji}</div>
+                    <span class="log-name">${item.name}</span>
+                `;
+            }
+
+            eliminationList.insertBefore(logRow, eliminationList.firstChild);
+
+            if (activeRemaining === 1) {
+                const winnerBall = balls.find(b => !b.isOut);
+                if (winnerBall) {
+                    top3Rankings.push({ rank: 1, item: winnerBall.item });
+                    setTimeout(() => showWinnerModal(), 600);
+                }
+            }
+        }
+
+        function showWinnerModal() {
+            releaseWakeLock();
+            podiumContainer.innerHTML = '';
+
+            const rank1 = top3Rankings.find(r => r.rank === 1);
+            const rank2 = top3Rankings.find(r => r.rank === 2);
+            const rank3 = top3Rankings.find(r => r.rank === 3);
+
+            if (rank2) createPodiumCard(rank2.item, 2, '🥈 রানারআপ');
+            if (rank1) createPodiumCard(rank1.item, 1, '🥇 বিজয়ী');
+            if (rank3) createPodiumCard(rank3.item, 3, '🥉 ৩য় স্থান');
+
+            winnerModal.style.display = 'flex';
+        }
+
+        function createPodiumCard(item, rankNumber, titleText) {
+            const card = document.createElement('div');
+            card.className = `podium-card rank-${rankNumber}`;
+            
+            let displayElement = '';
+            if (currentMode === 'flag') {
+                displayElement = `<img class="podium-flag" src="https://flagcdn.com/w80/${item.code.toLowerCase()}.png" alt="">`;
+            } else {
+                displayElement = `<div class="podium-icon-box">${item.emoji}</div>`;
+            }
+
+            card.innerHTML = `
+                <div class="podium-badge">${titleText}</div>
+                ${displayElement}
+                <div class="podium-name">${item.name}</div>
+            `;
+            podiumContainer.appendChild(card);
+        }
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvasSize, canvasSize);
+
+            if (isBattleStarted) {
+                ringAngle = (ringAngle + RING_SPEED) % (Math.PI * 2);
+            }
+
+            drawArena();
+            checkBallCollisions();
+
+            balls.forEach(ball => {
+                ball.update();
+                ball.draw();
+            });
+
+            if (isGameRunning) {
+                animationFrameId = requestAnimationFrame(gameLoop);
+            }
+        }
+
+        function startGame() {
+            homeOverlay.style.display = 'none';
+            resetGame();
+            isBattleStarted = false;
+            ingameStartBtn.style.display = 'block';
+        }
+
+        function launchBattle() {
+            isBattleStarted = true;
+            ingameStartBtn.style.display = 'none';
+            requestWakeLock();
+        }
+
+        function goHome() {
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            isGameRunning = false;
+            isBattleStarted = false;
+            winnerModal.style.display = 'none';
+            ingameStartBtn.style.display = 'none';
+            homeOverlay.style.display = 'flex';
+        }
+
+        function resetGame() {
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+
+            winnerModal.style.display = 'none';
+            ingameStartBtn.style.display = 'block';
+            isBattleStarted = false;
+            eliminationList.innerHTML = '';
+            eliminatedCount = 0;
+            top3Rankings = [];
+
+            let dataset = [];
+            if (currentMode === 'fruit') {
+                dataset = fruitsData;
+                MIN_BALL_RADIUS = 11;
+                MAX_BALL_RADIUS = 20;
+            } else if (currentMode === 'flag') {
+                dataset = flagsData;
+                MIN_BALL_RADIUS = 6.5;
+                MAX_BALL_RADIUS = 14;
+            } else if (currentMode === 'animal') {
+                dataset = animalsData;
+                MIN_BALL_RADIUS = 11;
+                MAX_BALL_RADIUS = 20;
+            }
+
+            currentBallRadius = MIN_BALL_RADIUS;
+            lastEliminatedTime = Date.now();
+
+            balls = dataset.map(item => new Ball(item));
+            totalCount = balls.length;
+            liveCountEl.innerText = `বাকী: ${totalCount}`;
+
+            isGameRunning = true;
+            gameLoop();
+        }
+
+        function resizeGameArea() {
+            const gameArea = document.querySelector('.game-area');
+            const availableWidth = gameArea.clientWidth - 20;
+            const availableHeight = gameArea.clientHeight - 80;
+            
+            canvasSize = Math.min(availableWidth, availableHeight);
+            canvas.width = canvasSize;
+            canvas.height = canvasSize;
+
+            centerX = canvasSize / 2;
+            centerY = canvasSize / 2;
+            arenaRadius = (canvasSize / 2) - 15;
+        }
+
+        window.addEventListener('resize', resizeGameArea);
+        resizeGameArea();
+    </script>
+</body>
+</html>
